@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息 - AI作业批改师</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>AI作业批改师</h1>
+            </div>
+            <nav class="nav">
+                <ul>
+                    <li><a href="index.html">首页</a></li>
+                    <li><a href="correction.html">批改中心</a></li>
+                    <li><a href="profile.html" class="active">个人信息</a></li>
+                </ul>
+            </nav>
+            <div class="user-info" id="userInfoHeader">
+                <span id="userNameDisplay">未登录</span>
+                <a href="#" id="logoutBtn" class="logout-btn">退出</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="profile-section">
+        <div class="container">
+            <div class="profile-container">
+                <div class="profile-sidebar">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profileName">加载中...</h2>
+                        <p id="profileId">学号：加载中...</p>
+                        <p id="profileClass">班级：加载中...</p>
+                    </div>
+                    <div class="profile-menu">
+                        <ul>
+                            <li class="active" data-tab="overview"><i class="fas fa-home"></i> 概览</li>
+                            <li data-tab="submissions"><i class="fas fa-file-alt"></i> 提交记录</li>
+                            <li data-tab="analytics"><i class="fas fa-chart-bar"></i> 学习分析</li>
+                            <li data-tab="feedback"><i class="fas fa-comment-alt"></i> AI评价</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="profile-content">
+                    <!-- 概览 Tab -->
+                    <div class="profile-tab active" id="overview">
+                        <h2>学习概览</h2>
+                        <div class="overview-stats">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>作业提交</h3>
+                                    <p id="homeworkCount">0</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>测试完成</h3>
+                                    <p id="testCount">0</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-file-signature"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>考试完成</h3>
+                                    <p id="examCount">0</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>平均分数</h3>
+                                    <p id="averageScore">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-activities">
+                            <h3>最近活动</h3>
+                            <div class="activity-list" id="recentActivities">
+                                <!-- 最近活动将在这里显示 -->
+                                <p class="empty-message">暂无活动记录</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 提交记录 Tab -->
+                    <div class="profile-tab" id="submissions">
+                        <h2>提交记录</h2>
+                        <div class="submission-filters">
+                            <div class="filter-group">
+                                <label for="submissionType">类型：</label>
+                                <select id="submissionType">
+                                    <option value="all">全部</option>
+                                    <option value="homework">作业</option>
+                                    <option value="test">测试</option>
+                                    <option value="exam">考试</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="submissionSort">排序：</label>
+                                <select id="submissionSort">
+                                    <option value="date-desc">日期（最新）</option>
+                                    <option value="date-asc">日期（最早）</option>
+                                    <option value="score-desc">分数（高到低）</option>
+                                    <option value="score-asc">分数（低到高）</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="submission-table-container">
+                            <table class="submission-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>类型</th>
+                                        <th>标题</th>
+                                        <th>提交日期</th>
+                                        <th>分数</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="submissionTableBody">
+                                    <!-- 提交记录将在这里显示 -->
+                                </tbody>
+                            </table>
+                            <p class="empty-message" id="emptySubmissions">暂无提交记录</p>
+                        </div>
+                        
+                        <div class="pagination" id="submissionPagination">
+                            <!-- 分页控件将在这里显示 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 学习分析 Tab -->
+                    <div class="profile-tab" id="analytics">
+                        <h2>学习分析</h2>
+                        <div class="analytics-container">
+                            <div class="chart-container">
+                                <h3>成绩趋势</h3>
+                                <canvas id="scoreChart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3>提交类型分布</h3>
+                                <canvas id="typeChart"></canvas>
+                            </div>
+                            <div class="performance-analysis">
+                                <h3>表现分析</h3>
+                                <div class="performance-metrics" id="performanceMetrics">
+                                    <!-- 表现分析将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI评价 Tab -->
+                    <div class="profile-tab" id="feedback">
+                        <h2>AI综合评价</h2>
+                        <div class="ai-feedback-container">
+                            <div class="ai-feedback-header">
+                                <div class="ai-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="ai-info">
+                                    <h3>AI批改师评价</h3>
+                                    <p>基于你的所有提交内容生成的综合评价</p>
+                                </div>
+                            </div>
+                            <div class="ai-feedback-content" id="aiFeedbackContent">
+                                <!-- AI评价将在这里显示 -->
+                                <p class="loading-message">正在生成评价，请稍候...</p>
+                            </div>
+                            <div class="strength-weakness">
+                                <div class="strength-section">
+                                    <h3><i class="fas fa-thumbs-up"></i> 优势</h3>
+                                    <ul id="strengthsList">
+                                        <!-- 优势将在这里显示 -->
+                                    </ul>
+                                </div>
+                                <div class="weakness-section">
+                                    <h3><i class="fas fa-thumbs-down"></i> 需要改进</h3>
+                                    <ul id="weaknessesList">
+                                        <!-- 需要改进的地方将在这里显示 -->
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="ai-suggestions">
+                                <h3>学习建议</h3>
+                                <div class="suggestion-list" id="aiSuggestionsList">
+                                    <!-- 学习建议将在这里显示 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 查看提交详情模态框 -->
+    <div class="modal" id="submissionDetailModal">
+        <div class="modal-content submission-detail-modal">
+            <span class="close-btn" id="closeSubmissionDetailModal">&times;</span>
+            <h2 id="submissionDetailTitle">提交详情</h2>
+            <div class="submission-detail-content">
+                <div class="submission-info">
+                    <p><strong>ID:</strong> <span id="detailId"></span></p>
+                    <p><strong>类型:</strong> <span id="detailType"></span></p>
+                    <p><strong>标题:</strong> <span id="detailTitle"></span></p>
+                    <p><strong>提交日期:</strong> <span id="detailDate"></span></p>
+                    <p><strong>分数:</strong> <span id="detailScore"></span></p>
+                </div>
+                <div class="submission-feedback">
+                    <h3>AI批改反馈</h3>
+                    <div id="detailFeedback"></div>
+                </div>
+                <div class="submission-suggestions">
+                    <h3>改进建议</h3>
+                    <ul id="detailSuggestions"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>AI作业批改师</h2>
+                    <p>智能学习的得力助手</p>
+                </div>
+                <div class="footer-links">
+                    <h3>快速链接</h3>
+                    <ul>
+                        <li><a href="index.html">首页</a></li>
+                        <li><a href="correction.html">批改中心</a></li>
+                        <li><a href="profile.html">个人信息</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>联系我们</h3>
+                    <p><i class="fas fa-envelope"></i> contact@aigrader.com</p>
+                    <p><i class="fas fa-phone"></i> 010-12345678</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 AI作业批改师. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../static/js/profile.js"></script>
+</body>
+</html>

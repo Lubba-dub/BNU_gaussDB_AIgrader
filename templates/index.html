@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI作业批改师 - 智能学习助手</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>AI作业批改师</h1>
+            </div>
+            <nav class="nav">
+                <ul>
+                    <li><a href="index.html" class="active">首页</a></li>
+                    <li><a href="correction.html">批改中心</a></li>
+                    <li><a href="profile.html">个人信息</a></li>
+                </ul>
+            </nav>
+            <div class="auth-buttons">
+                <a href="#" class="login-btn" id="loginBtn">登录</a>
+                <a href="#" class="register-btn" id="registerBtn">注册</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>智能批改，高效学习</h2>
+                <p>基于GaussDB和深度学习技术，为您提供智能、高效、精准的作业批改服务</p>
+                <a href="correction.html" class="cta-button">立即体验</a>
+            </div>
+            <div class="hero-image">
+                <img src="../static/images/hero-image.svg" alt="AI批改师示意图">
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">核心功能</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3>智能批改</h3>
+                    <p>上传作业、测试或考试文档，AI自动分析内容并给出评分和详细反馈</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>智能对话</h3>
+                    <p>与AI批改师进行实时对话，解答疑惑，获取个性化学习建议</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>学习分析</h3>
+                    <p>查看个人学习数据分析，了解学习进度和薄弱环节</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3>历史记录</h3>
+                    <p>查看历史提交记录和评分，追踪学习成长轨迹</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">使用流程</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>注册账号</h3>
+                    <p>填写基本信息，创建个人账号</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>上传文档</h3>
+                    <p>上传Word格式的作业、测试或考试文档</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>AI批改</h3>
+                    <p>系统自动分析文档内容并给出评分和反馈</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>查看结果</h3>
+                    <p>查看详细批改结果，与AI对话获取更多指导</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about">
+        <div class="container">
+            <h2 class="section-title">关于我们</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>AI作业批改师是基于GaussDB和深度学习技术开发的智能教育辅助平台，旨在为学生提供高效、精准的作业批改和学习指导服务。</p>
+                    <p>我们利用先进的自然语言处理技术，结合GaussDB强大的数据处理能力，为用户提供智能化的学习体验。</p>
+                </div>
+                <div class="about-image">
+                    <img src="../static/images/about-image.svg" alt="关于我们">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 登录模态框 -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeLoginModal">&times;</span>
+            <h2>登录</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginId">学号</label>
+                    <input type="text" id="loginId" name="loginId" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">密码</label>
+                    <input type="password" id="loginPassword" name="loginPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">登录</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeRegisterModal">&times;</span>
+            <h2>注册</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerId">学号</label>
+                    <input type="text" id="registerId" name="registerId" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerName">姓名</label>
+                    <input type="text" id="registerName" name="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerClass">班级</label>
+                    <input type="text" id="registerClass" name="registerClass" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">密码</label>
+                    <input type="password" id="registerPassword" name="registerPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <button type="submit" class="submit-btn">注册</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>AI作业批改师</h2>
+                    <p>智能学习的得力助手</p>
+                </div>
+                <div class="footer-links">
+                    <h3>快速链接</h3>
+                    <ul>
+                        <li><a href="index.html">首页</a></li>
+                        <li><a href="correction.html">批改中心</a></li>
+                        <li><a href="profile.html">个人信息</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>联系我们</h3>
+                    <p><i class="fas fa-envelope"></i> contact@aigrader.com</p>
+                    <p><i class="fas fa-phone"></i> 010-12345678</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 AI作业批改师. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../static/js/main.js"></script>
+</body>
+</html>

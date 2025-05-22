@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批改中心 - AI作业批改师</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>AI作业批改师</h1>
+            </div>
+            <nav class="nav">
+                <ul>
+                    <li><a href="index.html">首页</a></li>
+                    <li><a href="correction.html" class="active">批改中心</a></li>
+                    <li><a href="profile.html">个人信息</a></li>
+                </ul>
+            </nav>
+            <div class="user-info" id="userInfoHeader">
+                <span id="userNameDisplay">未登录</span>
+                <a href="#" id="logoutBtn" class="logout-btn">退出</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="correction-section">
+        <div class="container">
+            <div class="correction-container">
+                <div class="upload-area">
+                    <h2>上传文档</h2>
+                    <div class="upload-box" id="uploadBox">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>拖放文件到这里或</p>
+                        <label for="fileUpload" class="upload-btn">选择文件</label>
+                        <input type="file" id="fileUpload" accept=".doc,.docx" hidden>
+                        <p class="file-info" id="fileInfo">支持 .doc, .docx 格式</p>
+                    </div>
+                    <div class="document-type">
+                        <h3>文档类型</h3>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="docType" value="homework" checked>
+                                <span>作业</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="docType" value="test">
+                                <span>测试</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="docType" value="exam">
+                                <span>考试</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button id="submitDocBtn" class="submit-doc-btn" disabled>提交文档</button>
+                </div>
+                
+                <div class="chat-area">
+                    <div class="chat-header">
+                        <h2>AI批改师对话</h2>
+                        <div class="chat-actions">
+                            <button id="clearChatBtn" class="clear-chat-btn"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message ai-message">
+                            <div class="message-content">
+                                <p>你好！我是AI批改师，请上传你的文档，我将为你提供批改和反馈。你也可以直接向我提问关于学习的问题。</p>
+                            </div>
+                        </div>
+                        <!-- 消息将动态添加到这里 -->
+                    </div>
+                    <div class="chat-input">
+                        <textarea id="messageInput" placeholder="输入消息..."></textarea>
+                        <button id="sendMessageBtn"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="correction-results" id="correctionResults">
+        <div class="container">
+            <h2 class="section-title">批改结果</h2>
+            <div class="results-container hidden" id="resultsContainer">
+                <div class="result-header">
+                    <div class="result-info">
+                        <h3 id="resultDocName">文档名称</h3>
+                        <p id="resultDocType">文档类型：作业</p>
+                        <p id="resultSubmitTime">提交时间：2023-05-22 12:30</p>
+                    </div>
+                    <div class="result-score">
+                        <div class="score-circle">
+                            <span id="resultScore">0</span>
+                        </div>
+                        <p>分数</p>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <h3>评价反馈</h3>
+                    <div class="feedback-content" id="feedbackContent">
+                        <!-- 评价反馈将在这里显示 -->
+                    </div>
+                </div>
+                <div class="result-suggestions">
+                    <h3>改进建议</h3>
+                    <ul id="suggestionsList">
+                        <!-- 改进建议将在这里显示 -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>正在处理，请稍候...</p>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>AI作业批改师</h2>
+                    <p>智能学习的得力助手</p>
+                </div>
+                <div class="footer-links">
+                    <h3>快速链接</h3>
+                    <ul>
+                        <li><a href="index.html">首页</a></li>
+                        <li><a href="correction.html">批改中心</a></li>
+                        <li><a href="profile.html">个人信息</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>联系我们</h3>
+                    <p><i class="fas fa-envelope"></i> contact@aigrader.com</p>
+                    <p><i class="fas fa-phone"></i> 010-12345678</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 AI作业批改师. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../static/js/correction.js"></script>
+</body>
+</html>
