@@ -6,7 +6,7 @@ def get_db_connection():
             database="finance01",
             user="python0l_user31",
             password="python01_user31@123",
-            host="110.41.115.206",
+            host="192.168.0.207",
             port=8000
         )
         print('Database connection successful!')
@@ -37,8 +37,8 @@ def init_database():
             id SERIAL PRIMARY KEY,
             username VARCHAR(50) NOT NULL UNIQUE,
             password VARCHAR(100) NOT NULL,
-            email VARCHAR(100) NOT NULL,
-            class_id INT REFERENCES s_class(class_id),
+            name VARCHAR(50) NOT NULL,
+            class VARCHAR(50) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """)

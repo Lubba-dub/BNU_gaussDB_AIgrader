@@ -3,6 +3,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
 import json
+from docx import Document
 from DB import *
 from main import chat, sql_input, sql_output
 
@@ -44,20 +45,25 @@ def profile():
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
-    username = data.get('username')
+    username = data.get('username')  # 学号
     password = data.get('password')
-    email = data.get('email')
+    name = data.get('name')
+    class_name = data.get('email')  # 使用email字段传递班级信息
+    
+    # 验证必填字段
+    if not all([username, password, name, class_name]):
+        return jsonify({'success': False, 'message': '所有字段都是必填的'})
     
     try:
-        # 检查用户名是否已存在
+        # 检查学号是否已存在
         check_sql = "SELECT * FROM student WHERE username = %s"
         result = sql_output(check_sql, (username,))
         if result:
-            return jsonify({'success': False, 'message': '用户名已存在'})
+            return jsonify({'success': False, 'message': '该学号已被注册'})
         
         # 插入新用户
-        insert_sql = "INSERT INTO student (username, password, email) VALUES (%s, %s, %s) RETURNING id"
-        user_id = sql_input(insert_sql, (username, password, email))
+        insert_sql = "INSERT INTO student (username, password, name, class) VALUES (%s, %s, %s, %s) RETURNING id"
+        user_id = sql_input(insert_sql, (username, password, name, class_name))
         
         session['user_id'] = user_id
         return jsonify({'success': True})
@@ -132,9 +138,9 @@ def correct_homework():
         file_name = result[0][0]
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
         
-        # 读取文件内容
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        # 读取Word文档内容
+        doc = Document(file_path)
+        content = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
         
         # 调用AI批改
         correction_result = chat(content)

@@ -61,7 +61,7 @@ def chat(message):
         AI模型的回复（JSON格式的字符串）
     """
     try:
-        client = OpenAI(api_key="<DeepSeek API Key>", base_url="https://api.deepseek.com")
+        client = OpenAI(api_key="sk-13b8f3244f3542f5b7b620dec6618cee", base_url="https://api.deepseek.com")
 
         # 构建系统提示词
         system_prompt = """
