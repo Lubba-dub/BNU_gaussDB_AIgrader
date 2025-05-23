@@ -21,8 +21,8 @@
                 </ul>
             </nav>
             <div class="auth-buttons">
-                <a href="#" class="login-btn" id="loginBtn">登录</a>
-                <a href="#" class="register-btn" id="registerBtn">注册</a>
+                <a href="#" class="login-btn" id="loginBtn" data-modal="#loginModal">登录</a>
+                <a href="#" class="register-btn" id="registerBtn" data-modal="#registerModal">注册</a>
             </div>
         </div>
     </header>
@@ -124,7 +124,7 @@
         <div class="modal-content">
             <span class="close-btn" id="closeLoginModal">&times;</span>
             <h2>登录</h2>
-            <form id="loginForm">
+            <form id="loginForm" action="/api/login">
                 <div class="form-group">
                     <label for="loginId">学号</label>
                     <input type="text" id="loginId" name="loginId" required>
@@ -143,7 +143,7 @@
         <div class="modal-content">
             <span class="close-btn" id="closeRegisterModal">&times;</span>
             <h2>注册</h2>
-            <form id="registerForm">
+            <form id="registerForm" action="/api/register">
                 <div class="form-group">
                     <label for="registerId">学号</label>
                     <input type="text" id="registerId" name="registerId" required>

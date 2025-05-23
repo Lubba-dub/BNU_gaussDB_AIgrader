@@ -250,30 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 消息提示
     function showMessage(type, message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message-toast ${type}`;
-        messageDiv.textContent = message;
-        messageDiv.style.position = 'fixed';
-        messageDiv.style.top = '20px';
-        messageDiv.style.right = '20px';
-        messageDiv.style.padding = '15px 25px';
-        messageDiv.style.borderRadius = '5px';
-        messageDiv.style.backgroundColor = {
-            success: '#2ecc71',
-            error: '#e74c3c',
-            info: '#3498db'
-        }[type];
-        messageDiv.style.color = '#fff';
-        messageDiv.style.zIndex = '1000';
-        messageDiv.style.transition = 'opacity 0.3s';
-
-        document.body.appendChild(messageDiv);
-
-        setTimeout(() => {
-            messageDiv.style.opacity = '0';
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 300);
-        }, 3000);
+        window.ui.showNotification(message, type);
     }
 });

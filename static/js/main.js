@@ -22,18 +22,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 模态框控制
     const modals = document.querySelectorAll('.modal');
-    const modalTriggers = document.querySelectorAll('[data-modal]');
+    const loginBtn = document.querySelector('#loginBtn');
+    const registerBtn = document.querySelector('#registerBtn');
     const closeBtns = document.querySelectorAll('.close-btn');
 
-    modalTriggers.forEach(trigger => {
-        trigger.addEventListener('click', () => {
-            const modalId = trigger.getAttribute('data-modal');
-            const modal = document.querySelector(modalId);
-            if (modal) {
-                modal.style.display = 'block';
-            }
-        });
+    // 登录按钮点击事件
+    loginBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelector('#loginModal').style.display = 'block';
     });
+
+    // 注册按钮点击事件
+    registerBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelector('#registerModal').style.display = 'block';
+    });
+
+
 
     closeBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -71,22 +76,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // 验证邮箱格式
-            const emailField = form.querySelector('input[type="email"]');
-            if (emailField && emailField.value) {
-                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailPattern.test(emailField.value)) {
+            // 验证班级格式
+            const classField = form.querySelector('#registerClass');
+            if (classField && classField.value) {
+                if (classField.value.length > 50) {
                     isValid = false;
-                    showError(emailField, '请输入有效的邮箱地址');
+                    showError(classField, '班级名称不能超过50个字符');
                 }
             }
 
-            // 验证密码长度
+            // 验证密码长度和一致性
             const passwordField = form.querySelector('input[type="password"]');
             if (passwordField && passwordField.value) {
                 if (passwordField.value.length < 6) {
                     isValid = false;
                     showError(passwordField, '密码长度至少为6个字符');
+                }
+
+                // 如果是注册表单，验证确认密码
+                if (form.id === 'registerForm') {
+                    const confirmPasswordField = form.querySelector('#confirmPassword');
+                    if (confirmPasswordField && confirmPasswordField.value !== passwordField.value) {
+                        isValid = false;
+                        showError(confirmPasswordField, '两次输入的密码不一致');
+                    }
                 }
             }
 
@@ -131,12 +144,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // 提交表单数据
     async function submitForm(data, endpoint) {
         try {
+            // 根据表单类型处理数据
+            let processedData = {};
+            if (endpoint === '/api/login') {
+                processedData = {
+                    username: data.loginId,
+                    password: data.loginPassword
+                };
+            } else if (endpoint === '/api/register') {
+                processedData = {
+                    username: data.registerId,
+                    password: data.registerPassword,
+                    name: data.registerName,
+                    class: data.registerClass
+                };
+            }
+
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(processedData)
             });
 
             if (!response.ok) {
@@ -146,6 +175,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             if (result.success) {
                 showMessage('success', '操作成功！');
+                // 关闭模态框
+                const modal = document.querySelector('.modal[style*="display: block"]');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
@@ -160,27 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 显示消息提示
     function showMessage(type, message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message-toast ${type}`;
-        messageDiv.textContent = message;
-        messageDiv.style.position = 'fixed';
-        messageDiv.style.top = '20px';
-        messageDiv.style.right = '20px';
-        messageDiv.style.padding = '15px 25px';
-        messageDiv.style.borderRadius = '5px';
-        messageDiv.style.backgroundColor = type === 'success' ? '#2ecc71' : '#e74c3c';
-        messageDiv.style.color = '#fff';
-        messageDiv.style.zIndex = '1000';
-        messageDiv.style.transition = 'opacity 0.3s';
-
-        document.body.appendChild(messageDiv);
-
-        setTimeout(() => {
-            messageDiv.style.opacity = '0';
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 300);
-        }, 3000);
+        window.ui.showNotification(message, type);
     }
 
     // 特性卡片动画
