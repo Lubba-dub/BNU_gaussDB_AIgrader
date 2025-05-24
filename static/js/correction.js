@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             showMessage('info', '正在上传文件...');
-            const response = await fetch('/api/upload_homework', {
+            const response = await fetch('/api/upload_for_correction', {
                 method: 'POST',
                 body: formData
             });

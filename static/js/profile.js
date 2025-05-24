@@ -80,21 +80,71 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
+        
+        // 更新分类统计
+        if (stats.homeworkCount !== undefined) {
+            const homeworkElement = document.getElementById('homework-count');
+            if (homeworkElement) homeworkElement.textContent = stats.homeworkCount;
+        }
+        if (stats.testCount !== undefined) {
+            const testElement = document.getElementById('test-count');
+            if (testElement) testElement.textContent = stats.testCount;
+        }
+        if (stats.examCount !== undefined) {
+            const examElement = document.getElementById('exam-count');
+            if (examElement) examElement.textContent = stats.examCount;
+        }
     }
 
     // 加载提交历史
     async function loadSubmissionHistory() {
         try {
             const response = await fetch('/api/user/submissions');
-            if (!response.ok) {
-                throw new Error('获取提交历史失败');
+            const data = await response.json();
+            
+            const submissionsContainer = document.getElementById('submissions-list');
+            
+            // 检查是否有错误或空数据
+            if (data.success === false || !Array.isArray(data) || data.length === 0) {
+                submissionsContainer.innerHTML = '<p class="no-data">暂无提交记录</p>';
+                return;
             }
-
-            const submissions = await response.json();
-            displaySubmissionHistory(submissions);
+            
+            const submissions = Array.isArray(data) ? data : [];
+            
+            submissionsContainer.innerHTML = submissions.map(submission => {
+                const typeMap = {
+                    'homework': '作业',
+                    'test': '测试', 
+                    'exam': '考试'
+                };
+                
+                const typeName = typeMap[submission.type] || submission.type;
+                const statusMap = {
+                    'pending': '待批改',
+                    'completed': '已完成',
+                    'failed': '批改失败'
+                };
+                
+                const statusText = statusMap[submission.status] || submission.status;
+                
+                return `
+                    <div class="submission-item" onclick="viewSubmissionDetail(${submission.id})">
+                        <div class="submission-info">
+                            <h4>${submission.fileName}</h4>
+                            <p>类型: ${typeName} | 提交时间: ${submission.submitTime}</p>
+                            <p>状态: ${statusText}</p>
+                        </div>
+                        <div class="submission-score">
+                            ${submission.score !== null ? submission.score.toFixed(1) : '待批改'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         } catch (error) {
-            console.error('加载提交历史出错:', error);
-            showMessage('error', '加载提交历史失败');
+            console.error('加载提交记录失败:', error);
+            const submissionsContainer = document.getElementById('submissions-list');
+            submissionsContainer.innerHTML = '<p class="error-message">加载提交记录失败，请稍后重试</p>';
         }
     }
 
@@ -184,12 +234,80 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const data = await response.json();
+            
+            if (data.success !== false && data.trends && data.distribution) {
+                // 渲染成绩趋势图表
+                renderTrendsChart(data.trends);
+                
+                // 渲染提交类型分布图表
+                renderDistributionChart(data.distribution);
+            }
+            
             createScoreChart(data.scores);
             createTypeDistributionChart(data.typeDistribution);
         } catch (error) {
             console.error('加载分析图表出错:', error);
             showMessage('error', '加载分析图表失败');
         }
+    }
+    
+    function renderTrendsChart(trends) {
+        const chartContainer = document.getElementById('trends-chart');
+        if (!chartContainer || trends.length === 0) {
+            if (chartContainer) {
+                chartContainer.innerHTML = '<p class="no-data">暂无成绩趋势数据</p>';
+            }
+            return;
+        }
+        
+        // 简单的文本显示，实际项目中可以使用Chart.js等图表库
+        const trendsHtml = trends.map(trend => 
+            `<div class="trend-item">
+                <span class="month">${trend.month}</span>
+                <span class="score">${trend.avgScore}</span>
+            </div>`
+        ).join('');
+        
+        chartContainer.innerHTML = `
+            <div class="trends-list">
+                <h4>月度平均分趋势</h4>
+                ${trendsHtml}
+            </div>
+        `;
+    }
+    
+    function renderDistributionChart(distribution) {
+        const chartContainer = document.getElementById('distribution-chart');
+        if (!chartContainer) return;
+        
+        const total = distribution.homework + distribution.test + distribution.exam;
+        if (total === 0) {
+            chartContainer.innerHTML = '<p class="no-data">暂无提交分布数据</p>';
+            return;
+        }
+        
+        const distributionHtml = `
+            <div class="distribution-list">
+                <h4>提交类型分布</h4>
+                <div class="distribution-item">
+                    <span class="type">作业</span>
+                    <span class="count">${distribution.homework}</span>
+                    <span class="percentage">${((distribution.homework / total) * 100).toFixed(1)}%</span>
+                </div>
+                <div class="distribution-item">
+                    <span class="type">测试</span>
+                    <span class="count">${distribution.test}</span>
+                    <span class="percentage">${((distribution.test / total) * 100).toFixed(1)}%</span>
+                </div>
+                <div class="distribution-item">
+                    <span class="type">考试</span>
+                    <span class="count">${distribution.exam}</span>
+                    <span class="percentage">${((distribution.exam / total) * 100).toFixed(1)}%</span>
+                </div>
+            </div>
+        `;
+        
+        chartContainer.innerHTML = distributionHtml;
     }
 
     // 创建成绩趋势图表

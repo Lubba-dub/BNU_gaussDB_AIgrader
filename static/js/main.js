@@ -58,62 +58,125 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 表单验证
+    function validateForm(form) {
+        const inputs = form.querySelectorAll('input[required]');
+        let isValid = true;
+        
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                showError(input, '此字段为必填项');
+                isValid = false;
+            } else {
+                clearError(input);
+            }
+        });
+        
+        // 班级格式验证
+        const classInput = form.querySelector('input[name="class_name"]');
+        if (classInput && classInput.value) {
+            const classPattern = /^\d{4}级[\u4e00-\u9fa5]+\d+班$/;
+            if (!classPattern.test(classInput.value)) {
+                showError(classInput, '班级格式不正确，例如：2023级计算机1班');
+                isValid = false;
+            }
+        }
+        
+        // 密码验证
+        const passwordInput = form.querySelector('input[name="password"]');
+        const confirmPasswordInput = form.querySelector('input[name="confirm_password"]');
+        
+        if (passwordInput && passwordInput.value.length < 6) {
+            showError(passwordInput, '密码长度至少6位');
+            isValid = false;
+        }
+        
+        if (confirmPasswordInput && passwordInput.value !== confirmPasswordInput.value) {
+            showError(confirmPasswordInput, '两次输入的密码不一致');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+
     const forms = document.querySelectorAll('form');
-
     forms.forEach(form => {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            let isValid = true;
+            
+            if (!validateForm(form)) {
+                return;
+            }
+            
             const formData = new FormData(form);
-
-            // 验证必填字段
-            form.querySelectorAll('[required]').forEach(field => {
-                if (!field.value.trim()) {
-                    isValid = false;
-                    showError(field, '此字段为必填项');
-                } else {
-                    clearError(field);
-                }
-            });
-
-            // 验证班级格式
-            const classField = form.querySelector('#registerClass');
-            if (classField && classField.value) {
-                if (classField.value.length > 50) {
-                    isValid = false;
-                    showError(classField, '班级名称不能超过50个字符');
-                }
-            }
-
-            // 验证密码长度和一致性
-            const passwordField = form.querySelector('input[type="password"]');
-            if (passwordField && passwordField.value) {
-                if (passwordField.value.length < 6) {
-                    isValid = false;
-                    showError(passwordField, '密码长度至少为6个字符');
-                }
-
-                // 如果是注册表单，验证确认密码
-                if (form.id === 'registerForm') {
-                    const confirmPasswordField = form.querySelector('#confirmPassword');
-                    if (confirmPasswordField && confirmPasswordField.value !== passwordField.value) {
-                        isValid = false;
-                        showError(confirmPasswordField, '两次输入的密码不一致');
-                    }
-                }
-            }
-
-            if (isValid) {
-                // 在这里添加表单提交逻辑
-                console.log('表单验证通过，准备提交数据');
-                const formObject = {};
-                formData.forEach((value, key) => {
-                    formObject[key] = value;
+            const action = form.action;
+            
+            try {
+                const response = await fetch(action, {
+                    method: 'POST',
+                    body: formData
                 });
-                submitForm(formObject, form.getAttribute('action'));
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('success', result.message);
+                    if (action.includes('login')) {
+                        // 登录成功后刷新页面
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else if (action.includes('register')) {
+                        // 注册成功后切换到登录表单
+                        closeModal('register-modal');
+                        openModal('login-modal');
+                        form.reset(); // 清空注册表单
+                    }
+                } else {
+                    showMessage('error', result.message);
+                }
+            } catch (error) {
+                console.error('表单提交错误:', error);
+                showMessage('error', '提交失败，请稍后重试');
             }
         });
     });
+    
+    // 错误显示函数
+    function showError(input, message) {
+        clearError(input);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        input.parentNode.appendChild(errorDiv);
+        input.classList.add('error');
+    }
+    
+    // 清除错误函数
+    function clearError(input) {
+        const errorDiv = input.parentNode.querySelector('.error-message');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        input.classList.remove('error');
+    }
+    
+    // 消息显示函数
+    function showMessage(type, message) {
+        // 创建消息元素
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = message;
+        
+        // 添加到页面顶部
+        document.body.insertBefore(messageDiv, document.body.firstChild);
+        
+        // 3秒后自动移除
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.parentNode.removeChild(messageDiv);
+            }
+        }, 3000);
+    }
 
     // 显示错误信息
     function showError(field, message) {

@@ -464,6 +464,109 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* 消息样式 */
+.message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    z-index: 10000;
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+.message.success {
+    background-color: #4CAF50;
+}
+
+.message.error {
+    background-color: #f44336;
+}
+
+.message.info {
+    background-color: #2196F3;
+}
+
+/* 错误输入样式 */
+.error {
+    border-color: #f44336 !important;
+    box-shadow: 0 0 5px rgba(244, 67, 54, 0.3);
+}
+
+.error-message {
+    color: #f44336;
+    font-size: 0.9rem;
+    margin-top: 5px;
+    display: block;
+}
+
+.no-data {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* 趋势图表样式 */
+.trends-list {
+    padding: 20px;
+}
+
+.trend-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.trend-item:last-child {
+    border-bottom: none;
+}
+
+.month {
+    font-weight: bold;
+}
+
+.score {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* 分布图表样式 */
+.distribution-list {
+    padding: 20px;
+}
+
+.distribution-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.distribution-item:last-child {
+    border-bottom: none;
+}
+
+.type {
+    font-weight: bold;
+    flex: 1;
+}
+
+.count {
+    margin: 0 20px;
+    color: #666;
+}
+
+.percentage {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
     .header .container {
@@ -500,5 +603,11 @@ body {
 
     .feature-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .message {
+        right: 10px;
+        left: 10px;
+        max-width: none;
     }
 }
