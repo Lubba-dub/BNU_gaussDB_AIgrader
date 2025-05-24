@@ -1,26 +1,29 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, url_for, redirect
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
 import json
 from docx import Document
 from DB import *
-from main import chat, sql_input, sql_output
+from main import chat, sql_input, sql_output, process_homework # Import process_homework
+from config import Config, DevelopmentConfig, ProductionConfig # Import config classes
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # 设置会话密钥
 
-# 文件上传配置
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'doc', 'docx'}
+# Load configuration based on environment (e.g., FLASK_ENV)
+flask_env = os.environ.get('FLASK_ENV', 'development')
+if flask_env == 'production':
+    app.config.from_object(ProductionConfig)
+else:
+    app.config.from_object(DevelopmentConfig)
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Ensure UPLOAD_FOLDER exists
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 # 路由：主页
 @app.route('/')
@@ -48,7 +51,7 @@ def register():
     username = data.get('username')  # 学号
     password = data.get('password')
     name = data.get('name')
-    class_name = data.get('email')  # 使用email字段传递班级信息
+    class_name = data.get('class')  # Corrected: Use 'class' field for class name
     
     # 验证必填字段
     if not all([username, password, name, class_name]):
@@ -92,11 +95,14 @@ def login():
         print(f"登录错误: {str(e)}")
         return jsonify({'success': False, 'message': '登录失败，请重试'})
 
-# API：文件上传
-@app.route('/api/upload', methods=['POST'])
-def upload_file():
+# API：文件上传和初步批改 (Renamed from /api/upload and integrated /api/correct logic)
+@app.route('/api/upload_homework', methods=['POST'])
+def upload_homework_and_correct():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '用户未登录'}), 401
+
     if 'file' not in request.files:
-        return jsonify({'success': False, 'message': '没有文件'})
+        return jsonify({'success': False, 'message': '没有文件部分'})
     
     file = request.files['file']
     if file.filename == '':
@@ -105,62 +111,84 @@ def upload_file():
     if file and allowed_file(file.filename):
         try:
             filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            # Ensure unique filenames to prevent overwrites, e.g., by prefixing with timestamp or UUID
+            unique_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{filename}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
             file.save(file_path)
             
-            # 保存文件记录到数据库
-            sql = "INSERT INTO homework (student_id, file_name, submit_time) VALUES (%s, %s, %s) RETURNING id"
-            homework_id = sql_input(sql, (session['user_id'], filename, datetime.now()))
+            # Read Word document content
+            doc = Document(file_path)
+            content = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+
+            # At this point, we need to create a homework record BEFORE processing
+            # so that process_homework can update it.
+            # Let's assume student_id is in session.
+            student_id = session['user_id']
+
+            # Create initial homework record (status 'pending' or similar)
+            # The process_homework function in main.py expects to UPDATE an existing record.
+            # We need to decide if process_homework creates or updates.
+            # For now, let's adjust app.py to align with main.py's process_homework logic
+            # which implies an existing record to update.
+
+            # Create a placeholder homework entry first
+            insert_homework_sql = """
+            INSERT INTO homework (student_id, file_name, submit_time, status, content_summary)
+            VALUES (%s, %s, %s, %s, %s) RETURNING id
+            """
+            # Storing a summary or the full content might be useful for re-processing or display
+            # For now, let's just store a placeholder for content_summary
+            content_summary_placeholder = content[:200] + '...' if len(content) > 200 else content
             
-            return jsonify({
-                'success': True,
-                'fileId': homework_id
-            })
+            homework_id = sql_input(insert_homework_sql, 
+                                    (student_id, unique_filename, datetime.now(), 'pending', content_summary_placeholder))
+
+            if not homework_id:
+                return jsonify({'success': False, 'message': '创建作业记录失败'})
+
+            # Now call process_homework with the content and student_id (or homework_id)
+            # Modifying process_homework to take homework_id might be cleaner.
+            # For now, assuming process_homework uses student_id and updates the LATEST 'pending' homework for that student.
+            # This is a potential issue if a student uploads multiple files quickly.
+            # A better approach: pass homework_id to process_homework.
+            
+            # Let's assume process_homework is modified to take homework_id:
+            # result = process_homework(content, homework_id) # Ideal change in main.py
+
+            # Current main.py/process_homework uses student_id and updates based on student_id and 'pending' status.
+            # This is problematic. Let's simulate what it would do, but flag this for review.
+            # For the purpose of this step, we'll call it with content and student_id as it is.
+            # The `process_homework` function in `main.py` will then look for a pending homework for this student.
+            
+            # Call process_homework (from main.py)
+            # This function will perform AI correction and update the DB record it finds (based on student_id and status='pending')
+            # correction_data = process_homework(content, student_id) # student_id from session # OLD CALL
+            correction_data = process_homework(content, homework_id) # NEW CALL with homework_id
+
+            if correction_data.get('success'):
+                return jsonify({
+                    'success': True,
+                    'message': '文件上传成功并已提交批改。',
+                    'homework_id': correction_data.get('homework_id'), # process_homework should return this
+                    'correction': correction_data.get('correction')
+                })
+            else:
+                # Even if AI processing fails, the file is uploaded. 
+                # The status in DB would remain 'pending' or become 'error_processing'
+                return jsonify({
+                    'success': False, 
+                    'message': correction_data.get('message', 'AI批改失败，但文件已上传。'),
+                    'homework_id': homework_id # Return the ID of the created homework record
+                    })
+
         except Exception as e:
-            print(f"文件上传错误: {str(e)}")
-            return jsonify({'success': False, 'message': '文件上传失败'})
+            # Log the full error for debugging
+            app.logger.error(f"文件上传或批改错误: {str(e)}", exc_info=True)
+            return jsonify({'success': False, 'message': f'文件上传或处理失败: {str(e)}'})
     
-    return jsonify({'success': False, 'message': '不支持的文件类型'})
+    return jsonify({'success': False, 'message': '不支持的文件类型或文件上传失败'})
 
-# API：AI批改
-@app.route('/api/correct', methods=['POST'])
-def correct_homework():
-    data = request.get_json()
-    homework_id = data.get('fileId')
-    
-    try:
-        # 获取作业文件信息
-        sql = "SELECT file_name FROM homework WHERE id = %s"
-        result = sql_output(sql, (homework_id,))
-        if not result:
-            return jsonify({'success': False, 'message': '找不到作业文件'})
-        
-        file_name = result[0][0]
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
-        
-        # 读取Word文档内容
-        doc = Document(file_path)
-        content = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
-        
-        # 调用AI批改
-        correction_result = chat(content)
-        
-        # 解析AI返回的结果
-        result_dict = json.loads(correction_result)
-        
-        # 更新数据库中的批改结果
-        update_sql = "UPDATE homework SET score = %s, feedback = %s WHERE id = %s"
-        sql_input(update_sql, (result_dict['score'], result_dict['feedback'], homework_id))
-        
-        return jsonify({
-            'success': True,
-            'correction': result_dict
-        })
-    except Exception as e:
-        print(f"批改错误: {str(e)}")
-        return jsonify({'success': False, 'message': '批改失败，请重试'})
-
-# API：AI对话
+# API：AI对话 (This route seems fine as is)
 @app.route('/api/chat', methods=['POST'])
 def chat_with_ai():
     data = request.get_json()

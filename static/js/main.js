@@ -194,7 +194,148 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 显示消息提示
     function showMessage(type, message) {
-        window.ui.showNotification(message, type);
+        // Assuming window.ui.showNotification is defined elsewhere (e.g., in script.js or inline in HTML)
+        if (window.ui && typeof window.ui.showNotification === 'function') {
+            window.ui.showNotification(message, type);
+        } else {
+            // Fallback to a simple alert if the custom notification function is not available
+            alert(`${type.toUpperCase()}: ${message}`);
+            console.warn('window.ui.showNotification is not defined. Using alert as a fallback.');
+        }
+    }
+
+    // 文件上传处理
+    const fileUploadForm = document.querySelector('#fileUploadForm');
+    if (fileUploadForm) {
+        fileUploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const fileInput = this.querySelector('input[type="file"]');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showMessage('error', '请选择要上传的文件');
+                return;
+            }
+
+            // Basic file type validation (can be expanded)
+            const allowedTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document']; // .docx
+            if (!allowedTypes.includes(file.type)) {
+                showMessage('error', '仅支持上传 Word 文档 (.docx)');
+                return;
+            }
+
+            // Add student_id to formData if available (e.g., from a hidden input or session)
+            // For now, let's assume it's hardcoded or will be handled by the server session
+            // formData.append('student_id', 'some_student_id'); 
+
+            try {
+                const response = await fetch('/api/upload_homework', {
+                    method: 'POST',
+                    body: formData // FormData will be sent as multipart/form-data
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showMessage('success', result.message || '文件上传成功！正在批改...');
+                    // Optionally, trigger AI chat or display correction results here
+                    if (result.correction) {
+                        displayCorrection(result.correction);
+                    }
+                } else {
+                    showMessage('error', result.message || '文件上传失败');
+                }
+            } catch (error) {
+                console.error('文件上传时出错:', error);
+                showMessage('error', '文件上传失败，请稍后重试');
+            }
+        });
+    }
+
+    // 显示批改结果 (示例函数，需要根据实际HTML结构调整)
+    function displayCorrection(correction) {
+        const correctionDiv = document.querySelector('#correctionResult'); // Assume an element with this ID exists
+        if (correctionDiv) {
+            correctionDiv.innerHTML = `
+                <h3>批改结果</h3>
+                <p><strong>分数:</strong> ${correction.score}</p>
+                <p><strong>评价:</strong> ${correction.feedback}</p>
+                <p><strong>建议:</strong></p>
+                <ul>
+                    ${correction.suggestions.map(s => `<li>${s}</li>`).join('')}
+                </ul>
+            `;
+            correctionDiv.style.display = 'block';
+        }
+    }
+
+    // AI聊天交互
+    const chatForm = document.querySelector('#chatForm');
+    const chatMessagesContainer = document.querySelector('#chatMessages'); // Assume a container for messages
+    const chatInput = document.querySelector('#chatInput');
+
+    if (chatForm && chatMessagesContainer && chatInput) {
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            appendMessage('user', userMessage);
+            chatInput.value = ''; // Clear input
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: userMessage })
+                });
+
+                const result = await response.json();
+                if (result.success && result.reply) {
+                    appendMessage('ai', result.reply);
+                    // If the AI reply is a JSON string with correction details, parse and display it
+                    try {
+                        const aiCorrection = JSON.parse(result.reply); 
+                        if (aiCorrection.score !== undefined && aiCorrection.feedback) {
+                           // This indicates a correction-like response, you might want to display it differently
+                           // For now, just appending the raw JSON string as AI's message
+                           // Or, you could call displayCorrection(aiCorrection) if the structure matches
+                        }
+                    } catch (e) {
+                        // Not a JSON string, or not the expected correction format, just display as plain text
+                    }
+                } else {
+                    appendMessage('ai', result.message || '抱歉，无法获取回复。');
+                }
+            } catch (error) {
+                console.error('AI聊天时出错:', error);
+                appendMessage('ai', '与AI通信失败，请稍后重试。');
+            }
+        });
+    }
+
+    function appendMessage(sender, messageContent) {
+        if (!chatMessagesContainer) return;
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('chat-message', `${sender}-message`);
+        
+        // If messageContent is an object (like a parsed JSON from AI), stringify it or format it
+        let displayMessage = messageContent;
+        if (typeof messageContent === 'object') {
+            // Basic formatting for object/JSON display
+            displayMessage = `<pre>${JSON.stringify(messageContent, null, 2)}</pre>`;
+        } else {
+            // Escape HTML to prevent XSS if displaying plain text directly
+            const tempDiv = document.createElement('div');
+            tempDiv.textContent = messageContent;
+            displayMessage = tempDiv.innerHTML;
+        }
+
+        messageDiv.innerHTML = displayMessage;
+        chatMessagesContainer.appendChild(messageDiv);
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Scroll to bottom
     }
 
     // 特性卡片动画
