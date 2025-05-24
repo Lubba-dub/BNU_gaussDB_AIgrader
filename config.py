@@ -4,15 +4,15 @@ from datetime import timedelta
 # 数据库配置
 DB_CONFIG = {
     'database': 'finance01',
-    'user': 'python0l_user31',
-    'password': 'python01_user31@123',
+    'user': 'python0l_user48',
+    'password': 'python01_user48@123',
     'host': '110.41.115.206',
     'port': 8000
 }
 
 # AI模型配置
 AI_CONFIG = {
-    'api_key': '<DeepSeek API Key>',  # 请替换为实际的API密钥
+    'api_key': 'sk-824ce9b7eb7b49c4889ba57a0284a038',  # 请替换为实际的API密钥
     'base_url': 'https://api.deepseek.com',
     'model': 'deepseek-chat',
     'temperature': 0.7,  # AI回复的创造性程度（0-1）

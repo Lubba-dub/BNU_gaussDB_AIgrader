@@ -1,13 +1,16 @@
 import psycopg2
+from flask import current_app # Import current_app to access app.config
 
 def get_db_connection():
     try:
+        # Use database configuration from app.config
+        db_config = current_app.config['DB_CONFIG']
         conn = psycopg2.connect(
-            database="finance01",
-            user="python0l_user31",
-            password="python01_user31@123",
-            host="192.168.0.207",
-            port=8000
+            database=db_config['database'],
+            user=db_config['user'],
+            password=db_config['password'],
+            host=db_config['host'],
+            port=db_config['port']
         )
         print('Database connection successful!')
         return conn

@@ -3,6 +3,7 @@ from openai import OpenAI
 from DB import get_db_connection
 from datetime import datetime
 import json
+from flask import current_app # Import current_app to access app.config
 
 def sql_input(sql, params=None):
     """
@@ -61,7 +62,9 @@ def chat(message):
         AI模型的回复（JSON格式的字符串）
     """
     try:
-        client = OpenAI(api_key="sk-13b8f3244f3542f5b7b620dec6618cee", base_url="https://api.deepseek.com")
+        # Use AI configuration from app.config
+        ai_config = current_app.config['AI_CONFIG']
+        client = OpenAI(api_key=ai_config['api_key'], base_url=ai_config['base_url'])
 
         # 构建系统提示词
         system_prompt = """
@@ -80,12 +83,15 @@ def chat(message):
 
         # 发送请求到AI模型
         response = client.chat.completions.create(
-            model="deepseek-chat",
+            model=ai_config['model'],
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": message},
             ],
-            stream=False
+            stream=False,
+            temperature=ai_config['temperature'],
+            max_tokens=ai_config['max_tokens'],
+            timeout=ai_config['timeout']
         )
 
         # 获取AI回复
@@ -111,12 +117,12 @@ def chat(message):
             "suggestions": ["系统错误，请联系管理员"]
         })
 
-def process_homework(content, student_id):
+def process_homework(content, homework_id): # Changed student_id to homework_id
     """
     处理作业提交
     参数：
         content: 作业内容
-        student_id: 学生ID
+        homework_id: 作业ID (changed from student_id)
     返回：
         处理结果（字典）
     """
@@ -131,32 +137,35 @@ def process_homework(content, student_id):
         SET score = %s, 
             feedback = %s, 
             status = 'completed' 
-        WHERE student_id = %s 
-        AND status = 'pending' 
+        WHERE id = %s  # Changed from student_id = %s AND status = 'pending'
         RETURNING id
         """
         
-        homework_id = sql_input(
+        # The RETURNING id here will be the same homework_id that was passed in
+        updated_homework_id = sql_input(
             sql, 
-            (result_dict['score'], 
-             result_dict['feedback'], 
-             student_id)
+            (result_dict.get('score', 0),  # Use .get with default for safety
+             result_dict.get('feedback', ''), 
+             homework_id) # Use homework_id here
         )
 
-        if homework_id:
+        if updated_homework_id: # sql_input returns the ID on success with RETURNING
             return {
                 "success": True,
-                "homework_id": homework_id,
+                "homework_id": updated_homework_id,
                 "correction": result_dict
             }
         else:
+            # This case might happen if the homework_id was not found or DB error
             return {
                 "success": False,
-                "message": "作业更新失败"
+                "message": "作业更新失败，可能作业ID不存在或数据库错误。"
             }
 
     except Exception as e:
         print(f'作业处理错误: {str(e)}')
+        # Log the full error for debugging if possible, e.g., using app.logger if in Flask context
+        # current_app.logger.error(f'作业处理错误: {str(e)}', exc_info=True)
         return {
             "success": False,
             "message": "作业处理过程中出错"
