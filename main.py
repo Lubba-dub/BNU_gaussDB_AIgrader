@@ -79,6 +79,7 @@ def chat(message):
             "feedback": "总体评价",
             "suggestions": ["改进建议1", "改进建议2", ...]
         }
+        回答前请先思考，不要直接给出答案，一定要检查返回格式是否正确！！！开头不要有json这四个字母！！！
         """
 
         # 发送请求到AI模型
@@ -96,6 +97,8 @@ def chat(message):
 
         # 获取AI回复
         ai_response = response.choices[0].message.content
+        print("AI回复：")
+        print(ai_response)
 
         # 验证返回的是否为有效的JSON格式
         try:
@@ -103,11 +106,14 @@ def chat(message):
             return ai_response
         except json.JSONDecodeError:
             # 如果不是JSON格式，将回复封装为JSON
-            return json.dumps({
-                "score": 0,
-                "feedback": ai_response,
-                "suggestions": ["AI返回格式异常，请重试"]
-            })
+            json.loads(ai_response[4:])
+            return ai_response[4:]
+            if json.JSONDecodeError:    
+                return json.dumps({
+                    "score": 0,
+                    "feedback": ai_response,
+                    "suggestions": ["AI返回格式异常，请重试"]
+                })
 
     except Exception as e:
         print(f'AI对话错误: {str(e)}')
