@@ -70,23 +70,48 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('file', file);
 
+        // try {
+        //     showMessage('info', '正在上传文件...');
+        //     const response = await fetch('/api/upload_homework', {
+        //         method: 'POST',
+        //         body: formData
+        //     });
+
+        //     if (!response.ok) {
+        //         throw new Error('上传失败');
+        //     }
+
+        //     const result = await response.json();
+        //     if (result.success) {
+        //         showMessage('success', '文件上传成功');
+        //         updateFileInfo(file.name);
+        //         // 开始AI批改
+        //         startCorrection(result.fileId);
+        //     } else {
+        //         showMessage('error', result.message || '上传失败');
+        //     }
+        // } catch (error) {
+        //     console.error('文件上传出错:', error);
+        //     showMessage('error', '上传失败，请重试');
+        // }
         try {
             showMessage('info', '正在上传文件...');
-            const response = await fetch('/api/upload_for_correction', {
+            const response = await fetch('/api/upload_homework', {
                 method: 'POST',
                 body: formData
             });
-
-            if (!response.ok) {
-                throw new Error('上传失败');
-            }
-
+    
+            if (!response.ok) throw new Error('上传失败');
+    
             const result = await response.json();
             if (result.success) {
                 showMessage('success', '文件上传成功');
                 updateFileInfo(file.name);
-                // 开始AI批改
-                startCorrection(result.fileId);
+                
+                // 直接显示批改结果（如果后端返回）
+                if (result.correction) {
+                    displayCorrectionResult(result.correction);
+                }
             } else {
                 showMessage('error', result.message || '上传失败');
             }
@@ -128,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function startCorrection(fileId) {
         try {
             showMessage('info', 'AI正在批改作业...');
-            const response = await fetch('/api/correct', {
+            const response = await fetch('/api/upload_homework', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -154,28 +179,75 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 显示批改结果
+    // function displayCorrectionResult(correction) {
+    //     const resultArea = document.querySelector('.correction-result');
+    //     resultArea.innerHTML = `
+    //         <div class="result-header">
+    //             <h3>批改结果</h3>
+    //             <div class="score">${correction.score}分</div>
+    //         </div>
+    //         <div class="result-content">
+    //             <div class="feedback">
+    //                 <h4>评价反馈</h4>
+    //                 <p>${correction.feedback}</p>
+    //             </div>
+    //             <div class="suggestions">
+    //                 <h4>改进建议</h4>
+    //                 <ul>
+    //                     ${correction.suggestions.map(suggestion => 
+    //                         `<li>${suggestion}</li>`
+    //                     ).join('')}
+    //                 </ul>
+    //             </div>
+    //         </div>
+    //     `;
+    // }
     function displayCorrectionResult(correction) {
-        const resultArea = document.querySelector('.correction-result');
-        resultArea.innerHTML = `
-            <div class="result-header">
-                <h3>批改结果</h3>
-                <div class="score">${correction.score}分</div>
-            </div>
-            <div class="result-content">
-                <div class="feedback">
-                    <h4>评价反馈</h4>
-                    <p>${correction.feedback}</p>
-                </div>
-                <div class="suggestions">
-                    <h4>改进建议</h4>
-                    <ul>
-                        ${correction.suggestions.map(suggestion => 
-                            `<li>${suggestion}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-            </div>
-        `;
+        // 确保结果容器存在
+        const resultsContainer = document.getElementById('resultsContainer');
+        if (!resultsContainer) {
+            console.error('找不到结果容器');
+            return;
+        }
+    
+        // 移除隐藏状态（如果存在）
+        resultsContainer.classList.remove('hidden');
+    
+        // 填充元数据
+        document.getElementById('resultDocName').textContent = correction.docName || '未命名文档';
+        document.getElementById('resultDocType').textContent = `文档类型：${correction.docType || '作业'}`;
+        document.getElementById('resultSubmitTime').textContent = `提交时间：${correction.submitTime || new Date().toLocaleString()}`;
+        
+        // 更新分数
+        const scoreElement = document.getElementById('resultScore');
+        if (scoreElement) {
+            scoreElement.textContent = correction.score?.toFixed(1) || '0.0';
+            // 动态颜色（示例：红色 <60，黄色 60-80，绿色 >80）
+            const score = correction.score || 0;
+            scoreElement.style.color = score < 60 ? '#ff4d4d' : 
+                                      score < 80 ? '#ffc107' : '#28a745';
+        }
+    
+        // 填充反馈内容
+        const feedbackContent = document.getElementById('feedbackContent');
+        if (feedbackContent) {
+            feedbackContent.innerHTML = correction.feedback ? 
+                `<p>${correction.feedback}</p>` :
+                '<div class="alert alert-info">暂无详细反馈</div>';
+        }
+    
+        // 生成建议列表
+        const suggestionsList = document.getElementById('suggestionsList');
+        if (suggestionsList) {
+            suggestionsList.innerHTML = (correction.suggestions || ['暂无具体建议'])
+                .map(suggestion => `<li>${suggestion}</li>`)
+                .join('');
+        }
+    
+        // 滚动到结果区域（平滑滚动）
+        document.getElementById('correctionResults').scrollIntoView({
+            behavior: 'smooth'
+        });
     }
 
     // 聊天功能
