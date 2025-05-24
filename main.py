@@ -117,92 +117,60 @@ def chat(message):
             "suggestions": ["系统错误，请联系管理员"]
         })
 
-def process_homework(content, record_id, doc_type='homework'):
+def process_homework(content, homework_id): # Changed student_id to homework_id
     """
-    处理作业/测试/考试提交
+    处理作业提交
     参数：
-        content: 文档内容
-        record_id: 记录ID
-        doc_type: 文档类型 ('homework', 'test', 'exam')
+        content: 作业内容
+        homework_id: 作业ID (changed from student_id)
     返回：
         处理结果（字典）
     """
     try:
-        # 构建针对不同文档类型的提示词
-        if doc_type == 'homework':
-            prompt = f"请批改以下作业内容，给出分数(0-100)和详细反馈：\n\n{content}"
-        elif doc_type == 'test':
-            prompt = f"请批改以下测试内容，给出分数(0-100)和详细反馈：\n\n{content}"
-        elif doc_type == 'exam':
-            prompt = f"请批改以下考试内容，给出分数(0-100)和详细反馈：\n\n{content}"
-        else:
-            prompt = f"请批改以下内容，给出分数(0-100)和详细反馈：\n\n{content}"
-        
         # 调用AI批改
-        correction_result = chat(prompt)
+        correction_result = chat(content)
+        print(content)
+        print(f"AI批改结果: {correction_result}")
         result_dict = json.loads(correction_result)
 
-        # 根据文档类型更新对应的表
-        if doc_type == 'homework':
-            sql = """
-            UPDATE homework 
-            SET score = %s, 
-                feedback = %s, 
-                status = 'completed' 
-            WHERE id = %s
-            RETURNING id
-            """
-        elif doc_type == 'test':
-            sql = """
-            UPDATE test 
-            SET score = %s, 
-                feedback = %s, 
-                status = 'completed' 
-            WHERE id = %s
-            RETURNING id
-            """
-        elif doc_type == 'exam':
-            sql = """
-            UPDATE exam 
-            SET score = %s, 
-                feedback = %s, 
-                status = 'completed' 
-            WHERE id = %s
-            RETURNING id
-            """
-        else:
-            return {
-                "success": False,
-                "message": "不支持的文档类型"
-            }
+        # 更新数据库中的作业记录
+        sql = """
+        UPDATE homework 
+        SET score = %s, 
+            feedback = %s, 
+            status = 'completed' 
+        WHERE id = %s  AND status = 'pending'
+        RETURNING id
+        """
         
-        updated_record_id = sql_input(
+        # The RETURNING id here will be the same homework_id that was passed in
+        updated_homework_id = sql_input(
             sql, 
-            (result_dict.get('score', 0),
+            (result_dict.get('score', 0),  # Use .get with default for safety
              result_dict.get('feedback', ''), 
-             record_id)
+             homework_id) # Use homework_id here
         )
 
-        if updated_record_id:
+        if updated_homework_id: # sql_input returns the ID on success with RETURNING
             return {
                 "success": True,
-                "record_id": updated_record_id,
-                "doc_type": doc_type,
+                "homework_id": updated_homework_id,
                 "correction": result_dict
             }
         else:
+            # This case might happen if the homework_id was not found or DB error
             return {
                 "success": False,
-                "message": f"{doc_type}更新失败，可能记录ID不存在或数据库错误"
+                "message": "作业更新失败，可能作业ID不存在或数据库错误。"
             }
 
     except Exception as e:
-        print(f'{doc_type}处理错误: {str(e)}')
-        if current_app:
-            current_app.logger.error(f'{doc_type}处理错误: {str(e)}', exc_info=True)
+        print(f'作业处理错误: {str(e)}')
+        # Log the full error for debugging if possible, e.g., using app.logger if in Flask context
+        # current_app.logger.error(f'作业处理错误: {str(e)}', exc_info=True)
         return {
             "success": False,
-            "message": f"{doc_type}处理过程中出错: {str(e)}"
+            "message": "作业处理过程中出错"
         }
 
 if __name__ == "__main__":
