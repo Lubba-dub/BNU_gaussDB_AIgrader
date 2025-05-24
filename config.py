@@ -26,6 +26,12 @@ class Config:
     SECRET_KEY = os.urandom(24)
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     
+    # 数据库配置
+    DB_CONFIG = DB_CONFIG
+    
+    # AI配置
+    AI_CONFIG = AI_CONFIG
+    
     # 文件上传配置
     UPLOAD_FOLDER = 'uploads'
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 最大上传文件大小（10MB）
