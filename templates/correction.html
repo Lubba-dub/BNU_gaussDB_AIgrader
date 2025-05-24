@@ -15,9 +15,9 @@
             </div>
             <nav class="nav">
                 <ul>
-                    <li><a href="index.html">首页</a></li>
-                    <li><a href="correction.html" class="active">批改中心</a></li>
-                    <li><a href="profile.html">个人信息</a></li>
+                    <li><a href="{{ url_for('index') }}">首页</a></li>
+                    <li><a href="{{ url_for('correction') }}" class="active">批改中心</a></li>
+                    <li><a href="{{ url_for('profile') }}">个人信息</a></li>
                 </ul>
             </nav>
             <div class="user-info" id="userInfoHeader">
@@ -131,9 +131,9 @@
                 <div class="footer-links">
                     <h3>快速链接</h3>
                     <ul>
-                        <li><a href="index.html">首页</a></li>
-                        <li><a href="correction.html">批改中心</a></li>
-                        <li><a href="profile.html">个人信息</a></li>
+                        <li><a href="{{ url_for('index') }}">首页</a></li>
+                        <li><a href="{{ url_for('correction') }}">批改中心</a></li>
+                        <li><a href="{{ url_for('profile') }}">个人信息</a></li>
                     </ul>
                 </div>
                 <div class="footer-contact">

@@ -1,3 +1,17 @@
+window.ui = window.ui || {};
+window.ui.showNotification = (message, type = 'info') => {
+    // 使用浏览器原生 alert（简单但不够美观）
+    alert(`${type.toUpperCase()}: ${message}`);
+
+    // 或使用第三方库（如 SweetAlert2，推荐）
+    // Swal.fire({
+    //     icon: type === 'error' ? 'error' : 'success',
+    //     title: message,
+    //     showConfirmButton: false,
+    //     timer: 3000
+    // });
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // 文件上传区域交互
     const uploadBox = document.querySelector('.upload-box');
@@ -58,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             showMessage('info', '正在上传文件...');
-            const response = await fetch('/api/upload', {
+            const response = await fetch('/api/upload_homework', {
                 method: 'POST',
                 body: formData
             });
