@@ -232,6 +232,35 @@ def get_user_stats():
     except Exception as e:
         print(f"获取统计数据错误: {str(e)}")
         return jsonify({'success': False, 'message': '获取统计数据失败'})
+    
+# API：获取用户基本信息
+@app.route('/api/user/profile')
+def get_user_profile():
+    try:
+        if 'user_id' not in session:
+            return jsonify({'success': False, 'message': '用户未登录'}), 401
+
+        # 查询学生基本信息
+        profile_sql = """
+            SELECT name, username, class 
+            FROM student 
+            WHERE id = %s
+        """
+        profile_result = sql_output(profile_sql, (session['user_id'],))
+        
+        if not profile_result:
+            return jsonify({'success': False, 'message': '用户信息不存在'}), 404
+
+        student_data = profile_result[0]
+        return jsonify({
+            'name': student_data[0],
+            'student_id': session['user_id'],
+            'class_name': student_data[2]
+        })
+        
+    except Exception as e:
+        print(f"获取个人信息错误: {str(e)}")
+        return jsonify({'success': False, 'message': '获取个人信息失败'}), 500
 
 # API：获取提交历史
 @app.route('/api/user/submissions')
