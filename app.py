@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, url_for, redirect
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
@@ -9,6 +10,7 @@ from main import chat, sql_input, sql_output, process_homework # Import process_
 from config import Config, DevelopmentConfig, ProductionConfig # Import config classes
 
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Load configuration based on environment (e.g., FLASK_ENV)
 flask_env = os.environ.get('FLASK_ENV', 'development')
@@ -52,7 +54,6 @@ def register():
     password = data.get('password')
     name = data.get('name')
     class_name = data.get('class')  # Corrected: Use 'class' field for class name
-    
     # 验证必填字段
     if not all([username, password, name, class_name]):
         return jsonify({'success': False, 'message': '所有字段都是必填的'})
@@ -204,6 +205,39 @@ def chat_with_ai():
     except Exception as e:
         print(f"对话错误: {str(e)}")
         return jsonify({'success': False, 'message': '发送消息失败'})
+
+# API：获取当前用户信息
+@app.route('/api/user/info')
+def get_user_info():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '用户未登录'}), 401
+    
+    try:
+        sql = "SELECT id, username, name, class FROM student WHERE id = %s"
+        result = sql_output(sql, (session['user_id'],))
+        
+        if not result:
+            return jsonify({'success': False, 'message': '用户不存在'})
+        
+        user = result[0]
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user[0],
+                'username': user[1],
+                'name': user[2],
+                'class': user[3]
+            }
+        })
+    except Exception as e:
+        print(f"获取用户信息错误: {str(e)}")
+        return jsonify({'success': False, 'message': '获取用户信息失败'})
+
+# API：用户登出
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'success': True, 'message': '登出成功'})
 
 # API：获取用户统计数据
 @app.route('/api/user/stats')

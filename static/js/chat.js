@@ -280,24 +280,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 文件上传处理
-    function handleFileUpload(file) {
+    async function handleFileUpload(file) {
         if (!file) return;
 
-        // 检查文件类型
-        const allowedTypes = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        if (!allowedTypes.includes(file.type)) {
-            displayErrorMessage('只支持.doc和.docx格式的文件');
-            return;
+        try {
+            // 使用file_handler.js中的validateFile函数验证文件
+            window.fileHandler.validateFile(file);
+            
+            // 显示文件信息
+            const fileInfo = window.fileHandler.displayFileInfo(file);
+            
+            // 发送文件到AI进行批改
+            await sendMessageToAI(file, true);
+            
+            // 更新上传状态
+            window.fileHandler.handleUploadComplete(fileInfo, true, '文件已上传并开始AI批改');
+        } catch (error) {
+            displayErrorMessage(error.message || '文件处理失败');
         }
-
-        // 检查文件大小（最大10MB）
-        if (file.size > 10 * 1024 * 1024) {
-            displayErrorMessage('文件大小不能超过10MB');
-            return;
-        }
-
-        // 发送文件到AI进行批改
-        sendMessageToAI(file, true);
     }
 
     // 事件监听

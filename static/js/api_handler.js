@@ -3,7 +3,7 @@ class APIHandler {
     constructor() {
         this.baseURL = window.location.origin;
         this.endpoints = {
-            upload: '/api/upload',
+            upload: '/api/upload_homework',
             correct: '/api/correct',
             chat: '/api/chat',
             history: '/api/history',

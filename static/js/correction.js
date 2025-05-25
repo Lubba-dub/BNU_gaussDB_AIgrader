@@ -53,50 +53,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 处理文件上传
     async function handleFileUpload(file) {
-        // 验证文件类型
-        const validTypes = ['.doc', '.docx'];
-        const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-        if (!validTypes.includes(fileExtension)) {
-            showMessage('error', '请上传Word文档（.doc或.docx格式）');
-            return;
-        }
+        if (!file) return;
 
-        // 验证文件大小（最大10MB）
-        if (file.size > 10 * 1024 * 1024) {
-            showMessage('error', '文件大小不能超过10MB');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // try {
-        //     showMessage('info', '正在上传文件...');
-        //     const response = await fetch('/api/upload_homework', {
-        //         method: 'POST',
-        //         body: formData
-        //     });
-
-        //     if (!response.ok) {
-        //         throw new Error('上传失败');
-        //     }
-
-        //     const result = await response.json();
-        //     if (result.success) {
-        //         showMessage('success', '文件上传成功');
-        //         updateFileInfo(file.name);
-        //         // 开始AI批改
-        //         startCorrection(result.fileId);
-        //     } else {
-        //         showMessage('error', result.message || '上传失败');
-        //     }
-        // } catch (error) {
-        //     console.error('文件上传出错:', error);
-        //     showMessage('error', '上传失败，请重试');
-        // }
         try {
+            // 使用file_handler.js中的validateFile函数验证文件
+            window.fileHandler.validateFile(file);
+            
+            // 显示文件信息
+            const fileInfo = window.fileHandler.displayFileInfo(file);
+            
+            // 上传文件
+            const formData = new FormData();
+            formData.append('file', file);
+            
             showMessage('info', '正在上传文件...');
-            const response = await fetch('/api/upload_homework', {
+            const response = await fetch(window.fileHandler.config.uploadEndpoint, {
                 method: 'POST',
                 body: formData
             });
@@ -105,49 +76,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
             const result = await response.json();
             if (result.success) {
-                showMessage('success', '文件上传成功');
-                updateFileInfo(file.name);
+                showMessage('success', '文件上传成功，AI正在批改中...');
+                window.fileHandler.handleUploadComplete(fileInfo, true);
                 
-                // 直接显示批改结果（如果后端返回）
+                // 显示批改结果
                 if (result.correction) {
-                    displayCorrectionResult(result.correction);
+                    displayCorrectionResult({
+                        fileName: file.name,
+                        homeworkId: result.homework_id,
+                        correction: result.correction
+                    });
                 }
             } else {
                 showMessage('error', result.message || '上传失败');
+                window.fileHandler.handleUploadComplete(fileInfo, false, result.message || '上传失败');
             }
         } catch (error) {
             console.error('文件上传出错:', error);
-            showMessage('error', '上传失败，请重试');
+            showMessage('error', error.message || '上传失败，请重试');
         }
     }
 
-    // 更新文件信息显示
-    function updateFileInfo(fileName) {
-        const fileInfo = document.createElement('div');
-        fileInfo.className = 'file-info';
-        fileInfo.innerHTML = `
-            <i class="fas fa-file-word"></i>
-            <span>${fileName}</span>
-            <div class="file-actions">
-                <button class="btn btn-secondary btn-sm" onclick="removeFile(this)">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-        uploadBox.innerHTML = '';
-        uploadBox.appendChild(fileInfo);
-    }
-
-    // 移除文件
-    window.removeFile = function(button) {
-        const fileInfo = button.closest('.file-info');
-        fileInfo.remove();
-        uploadBox.innerHTML = `
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p>拖拽文件到此处或点击上传</p>
-            <span>支持 .doc, .docx 格式</span>
-        `;
-    };
+    // 移除文件处理已移至file_handler.js
 
     // AI批改处理
     async function startCorrection(fileId) {
@@ -179,30 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 显示批改结果
-    // function displayCorrectionResult(correction) {
-    //     const resultArea = document.querySelector('.correction-result');
-    //     resultArea.innerHTML = `
-    //         <div class="result-header">
-    //             <h3>批改结果</h3>
-    //             <div class="score">${correction.score}分</div>
-    //         </div>
-    //         <div class="result-content">
-    //             <div class="feedback">
-    //                 <h4>评价反馈</h4>
-    //                 <p>${correction.feedback}</p>
-    //             </div>
-    //             <div class="suggestions">
-    //                 <h4>改进建议</h4>
-    //                 <ul>
-    //                     ${correction.suggestions.map(suggestion => 
-    //                         `<li>${suggestion}</li>`
-    //                     ).join('')}
-    //                 </ul>
-    //             </div>
-    //         </div>
-    //     `;
-    // }
-    function displayCorrectionResult(correction) {
+    function displayCorrectionResult(data) {
         // 确保结果容器存在
         const resultsContainer = document.getElementById('resultsContainer');
         if (!resultsContainer) {
@@ -212,18 +139,27 @@ document.addEventListener('DOMContentLoaded', function() {
     
         // 移除隐藏状态（如果存在）
         resultsContainer.classList.remove('hidden');
+        
+        // 解析数据结构
+        const correction = data.correction || data;
+        const fileName = data.fileName || correction.fileName || '未命名文档';
+        const homeworkId = data.homeworkId || correction.homeworkId;
     
         // 填充元数据
-        document.getElementById('resultDocName').textContent = correction.docName || '未命名文档';
-        document.getElementById('resultDocType').textContent = `文档类型：${correction.docType || '作业'}`;
-        document.getElementById('resultSubmitTime').textContent = `提交时间：${correction.submitTime || new Date().toLocaleString()}`;
+        const resultDocName = document.getElementById('resultDocName');
+        const resultDocType = document.getElementById('resultDocType');
+        const resultSubmitTime = document.getElementById('resultSubmitTime');
+        
+        if (resultDocName) resultDocName.textContent = fileName;
+        if (resultDocType) resultDocType.textContent = `文档类型：作业`;
+        if (resultSubmitTime) resultSubmitTime.textContent = `提交时间：${new Date().toLocaleString()}`;
         
         // 更新分数
         const scoreElement = document.getElementById('resultScore');
         if (scoreElement) {
-            scoreElement.textContent = correction.score?.toFixed(1) || '0.0';
-            // 动态颜色（示例：红色 <60，黄色 60-80，绿色 >80）
             const score = correction.score || 0;
+            scoreElement.textContent = score.toFixed(1);
+            // 动态颜色（红色 <60，黄色 60-80，绿色 >80）
             scoreElement.style.color = score < 60 ? '#ff4d4d' : 
                                       score < 80 ? '#ffc107' : '#28a745';
         }
@@ -239,15 +175,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // 生成建议列表
         const suggestionsList = document.getElementById('suggestionsList');
         if (suggestionsList) {
-            suggestionsList.innerHTML = (correction.suggestions || ['暂无具体建议'])
+            const suggestions = correction.suggestions || ['暂无具体建议'];
+            suggestionsList.innerHTML = suggestions
                 .map(suggestion => `<li>${suggestion}</li>`)
                 .join('');
         }
     
         // 滚动到结果区域（平滑滚动）
-        document.getElementById('correctionResults').scrollIntoView({
-            behavior: 'smooth'
-        });
+        const correctionResults = document.getElementById('correctionResults');
+        if (correctionResults) {
+            correctionResults.scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
     }
 
     // 聊天功能

@@ -1,4 +1,23 @@
 // file_handler.js - 文件上传和处理功能
+// 创建全局文件处理对象
+window.fileHandler = {
+    validateFile: null,
+    displayFileInfo: null,
+    handleUploadComplete: null,
+    uploadFile: null,
+    updateProgress: null,
+    formatFileSize: null,
+    removeFile: null,
+    config: {
+        maxFileSize: 10 * 1024 * 1024, // 最大10MB
+        allowedTypes: [
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ],
+        uploadEndpoint: '/api/upload_homework'
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const fileUpload = document.getElementById('file-upload');
     const dropZone = document.getElementById('drop-zone');
@@ -6,18 +25,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadStatus = document.getElementById('upload-status');
     const fileList = document.getElementById('file-list');
 
-    // 文件上传配置
-    const config = {
-        maxFileSize: 10 * 1024 * 1024, // 最大10MB
-        allowedTypes: [
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ],
-        uploadEndpoint: '/api/upload'
-    };
+    // 使用全局配置
+    const config = window.fileHandler.config;
 
     // 验证文件
-    function validateFile(file) {
+    window.fileHandler.validateFile = function(file) {
         // 检查文件类型
         if (!config.allowedTypes.includes(file.type)) {
             throw new Error('只支持.doc和.docx格式的文件');
@@ -32,23 +44,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 显示文件信息
-    function displayFileInfo(file) {
+    window.fileHandler.displayFileInfo = function(file) {
         const fileInfo = document.createElement('div');
         fileInfo.className = 'file-info';
         fileInfo.innerHTML = `
             <span class="file-name">${file.name}</span>
-            <span class="file-size">${formatFileSize(file.size)}</span>
+            <span class="file-size">${window.fileHandler.formatFileSize(file.size)}</span>
             <div class="progress-bar">
                 <div class="progress" style="width: 0%"></div>
             </div>
             <span class="status">准备上传...</span>
+            <div class="file-actions">
+                <button class="btn btn-secondary btn-sm" onclick="window.fileHandler.removeFile(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         `;
         fileList.appendChild(fileInfo);
         return fileInfo;
     }
 
     // 格式化文件大小
-    function formatFileSize(bytes) {
+    window.fileHandler.formatFileSize = function(bytes) {
         if (bytes === 0) return '0 B';
         const k = 1024;
         const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -57,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 更新上传进度
-    function updateProgress(fileInfo, progress) {
+    window.fileHandler.updateProgress = function(fileInfo, progress) {
         const progressBar = fileInfo.querySelector('.progress');
         const status = fileInfo.querySelector('.status');
         progressBar.style.width = `${progress}%`;
@@ -65,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 上传完成处理
-    function handleUploadComplete(fileInfo, success, message) {
+    window.fileHandler.handleUploadComplete = function(fileInfo, success, message) {
         const status = fileInfo.querySelector('.status');
         if (success) {
             fileInfo.classList.add('upload-success');
@@ -82,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 上传文件
-    async function uploadFile(file) {
+    window.fileHandler.uploadFile = async function(file) {
         try {
             validateFile(file);
             const fileInfo = displayFileInfo(file);
@@ -105,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
             xhr.onload = () => {
                 if (xhr.status === 200) {
                     const response = JSON.parse(xhr.responseText);
-                    handleUploadComplete(fileInfo, true);
+                    window.fileHandler.handleUploadComplete(fileInfo, true);
                     // 触发自定义事件，通知文件上传成功
                     const event = new CustomEvent('fileUploaded', {
                         detail: {
@@ -115,13 +132,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     document.dispatchEvent(event);
                 } else {
-                    handleUploadComplete(fileInfo, false, '上传失败');
+                    window.fileHandler.handleUploadComplete(fileInfo, false, '上传失败');
                 }
             };
 
             // 错误监听
             xhr.onerror = () => {
-                handleUploadComplete(fileInfo, false, '网络错误');
+                window.fileHandler.handleUploadComplete(fileInfo, false, '网络错误');
             };
 
             xhr.send(formData);
@@ -164,6 +181,21 @@ document.addEventListener('DOMContentLoaded', function() {
     dropZone.addEventListener('click', () => {
         fileUpload.click();
     });
+
+    // 移除文件
+    window.fileHandler.removeFile = function(button) {
+        const fileInfo = button.closest('.file-info');
+        const uploadBox = document.querySelector('.upload-box');
+        
+        if (fileInfo && uploadBox) {
+            fileInfo.remove();
+            uploadBox.innerHTML = `
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>拖拽文件到此处或点击上传</p>
+                <span>支持 .doc, .docx 格式</span>
+            `;
+        }
+    };
 
     // 防止文件在新窗口打开
     window.addEventListener('dragover', (e) => e.preventDefault());

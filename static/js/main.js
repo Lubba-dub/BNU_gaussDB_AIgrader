@@ -1,5 +1,8 @@
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
+    // 检查用户登录状态
+    checkUserLoginStatus();
+    
     // 导航栏固定效果
     const header = document.querySelector('.header');
     window.addEventListener('scroll', () => {
@@ -160,7 +163,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
 
-            const response = await fetch(endpoint, {
+            // 构建完整的API URL
+            const baseUrl = window.location.origin;
+            const apiUrl = `${baseUrl}${endpoint}`;
+            
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -349,4 +356,123 @@ document.addEventListener('DOMContentLoaded', function() {
             card.style.transform = 'translateY(0)';
         });
     });
+
+    // 检查用户登录状态
+    async function checkUserLoginStatus() {
+        try {
+            const response = await fetch('/api/user/info');
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    updateUserInterface(result.user);
+                } else {
+                    updateUserInterface(null);
+                }
+            } else {
+                updateUserInterface(null);
+            }
+        } catch (error) {
+            console.error('检查登录状态失败:', error);
+            updateUserInterface(null);
+        }
+    }
+
+    // 更新用户界面
+    function updateUserInterface(user) {
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const authButtons = document.querySelector('.auth-buttons');
+        const userInfo = document.querySelector('.user-info');
+
+        if (user) {
+            // 用户已登录
+            if (userNameDisplay) {
+                userNameDisplay.textContent = user.name;
+            }
+            if (authButtons) {
+                authButtons.style.display = 'none';
+            }
+            if (userInfo) {
+                userInfo.style.display = 'block';
+            }
+            
+            // 添加登出事件监听
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+        } else {
+            // 用户未登录
+            if (userNameDisplay) {
+                userNameDisplay.textContent = '未登录';
+            }
+            if (authButtons) {
+                authButtons.style.display = 'block';
+            }
+            if (userInfo) {
+                userInfo.style.display = 'none';
+            }
+        }
+    }
+
+    // 处理用户登出
+    async function handleLogout(e) {
+        e.preventDefault();
+        try {
+            const response = await fetch('/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    showMessage('success', '登出成功');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                }
+            }
+        } catch (error) {
+            console.error('登出失败:', error);
+            showMessage('error', '登出失败，请重试');
+        }
+    }
+
+    // 将函数暴露到全局作用域
+    window.checkUserLoginStatus = checkUserLoginStatus;
+    window.updateUserInterface = updateUserInterface;
+    window.handleLogout = handleLogout;
 });
+
+// 全局用户状态管理
+window.userState = {
+    isLoggedIn: false,
+    user: null,
+    
+    setUser: function(user) {
+        this.user = user;
+        this.isLoggedIn = !!user;
+        localStorage.setItem('userInfo', JSON.stringify(user));
+    },
+    
+    getUser: function() {
+        if (!this.user) {
+            const stored = localStorage.getItem('userInfo');
+            if (stored) {
+                this.user = JSON.parse(stored);
+                this.isLoggedIn = true;
+            }
+        }
+        return this.user;
+    },
+    
+    clearUser: function() {
+        this.user = null;
+        this.isLoggedIn = false;
+        localStorage.removeItem('userInfo');
+    }
+};
