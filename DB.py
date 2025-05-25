@@ -55,9 +55,7 @@ def init_database():
             submit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             score DECIMAL(5,2),
             feedback TEXT,
-            status VARCHAR(20) DEFAULT 'pending',
-            content_summary TEXT,
-            doc_type VARCHAR(20) DEFAULT 'homework'
+            status VARCHAR(20) DEFAULT 'pending'
         );
         """)
 

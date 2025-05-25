@@ -4,7 +4,7 @@ from datetime import timedelta
 # 数据库配置
 DB_CONFIG = {
     'database': 'finance01',
-    'user': 'python0l_user48',
+    'user': 'python01_user48',
     'password': 'python01_user48@123',
     'host': '110.41.115.206',
     'port': 8000
@@ -25,12 +25,6 @@ class Config:
     # 基础配置
     SECRET_KEY = os.urandom(24)
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
-    
-    # 数据库配置
-    DB_CONFIG = DB_CONFIG
-    
-    # AI配置
-    AI_CONFIG = AI_CONFIG
     
     # 文件上传配置
     UPLOAD_FOLDER = 'uploads'
