@@ -28,7 +28,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
+    // 在DOM加载完成后立即执行
+    loadUserProfile();  // 添加这行调用
     // 默认加载概览数据
     loadOverviewStats();
 
@@ -47,6 +48,25 @@ document.addEventListener('DOMContentLoaded', function() {
             showMessage('error', '加载统计数据失败');
         }
     }
+
+    async function loadUserProfile() {
+        try {
+            const response = await fetch('/api/user/profile');
+            if (!response.ok) {
+                throw new Error('获取个人信息失败');
+            }
+
+            const profileData = await response.json();
+            document.getElementById('profileName').textContent = profileData.name;
+            document.getElementById('profileId').textContent = `学号：${profileData.student_id}`;
+            document.getElementById('profileClass').textContent = `班级：${profileData.class_name}`;
+        } catch (error) {
+            console.error('加载个人信息出错:', error);
+            showMessage('error', '加载个人信息失败');
+        }
+    }
+
+    
 
     // 更新概览统计数据
     function updateOverviewStats(stats) {
